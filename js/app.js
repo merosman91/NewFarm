@@ -161,26 +161,33 @@ class ShamsinApp {
     }
 
     async saveBatch() {
-        const formData = new FormData(document.getElementById('batchForm'));
-        const batchData = {
-            name: formData.get('batchName'),
-            startDate: formData.get('startDate'),
-            chicksCount: parseInt(formData.get('chicksCount')),
-            breedType: formData.get('breedType'),
-            chickPrice: parseFloat(formData.get('chickPrice')),
-            status: 'active',
-            createdAt: new Date().toISOString()
-        };
+    // في دالة saveBatch - تصحيح أخذ البيانات
+async saveBatch() {
+    const batchData = {
+        name: document.getElementById('batchName').value,
+        startDate: document.getElementById('startDate').value,
+        chicksCount: parseInt(document.getElementById('chicksCount').value),
+        breedType: document.getElementById('breedType').value,
+        chickPrice: parseFloat(document.getElementById('chickPrice').value),
+        status: 'active',
+        createdAt: new Date().toISOString()
+    };
 
-        try {
-            await BatchesManager.saveBatch(batchData);
-            this.closeModal();
-            document.getElementById('batchForm').reset();
-            this.showPage('batches');
-        } catch (error) {
-            console.error('Error saving batch:', error);
-            alert('حدث خطأ في حفظ الدفعة');
-        }
+    // التحقق من البيانات
+    if (!batchData.name || !batchData.startDate || !batchData.chicksCount) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+
+    try {
+        await BatchesManager.saveBatch(batchData);
+        this.closeModal();
+        document.getElementById('batchForm').reset();
+        this.showPage('batches');
+        this.showNotification('تم حفظ الدفعة بنجاح');
+    } catch (error) {
+        console.error('Error saving batch:', error);
+        alert('حدث خطأ في حفظ الدفعة');
     }
 }
 
