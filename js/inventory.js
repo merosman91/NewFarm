@@ -262,4 +262,112 @@ class InventoryManager {
             unit: document.getElementById('editItemUnit').value,
             minimumStock: parseFloat(document.getElementById('editMinimumStock').value),
             expiryDate: document.getElementById('editExpiryDate').value || null,
-            notes:
+            notes: document.getElementById('editItemNotes').value,
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            await DatabaseManager.update('inventory', itemId, itemData);
+            closeModal();
+            this.loadInventory();
+            window.app.showNotification('تم تعديل العنصر بنجاح');
+        } catch (error) {
+            console.error('Error updating inventory item:', error);
+            alert('حدث خطأ في تعديل العنصر');
+        }
+    }
+
+    static async updateStock(itemId) {
+        try {
+            const item = await DatabaseManager.get('inventory', itemId);
+            if (!item) {
+                alert('العنصر غير موجود');
+                return;
+            }
+
+            const modalContent = `
+                <div class="modal-header">
+                    <h3>تحديث مخزون: ${item.name}</h3>
+                    <button class="close-btn" onclick="closeModal()">×</button>
+                </div>
+                <form id="updateStockForm" class="modal-form">
+                    <div class="form-group">
+                        <label>الكمية الحالية: ${item.quantity} ${item.unit}</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockOperation">العملية</label>
+                        <select id="stockOperation" required>
+                            <option value="add">إضافة للمخزون</option>
+                            <option value="subtract">خصم من المخزون</option>
+                            <option value="set">تعيين قيمة جديدة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockQuantity">الكمية</label>
+                        <input type="number" step="0.01" id="stockQuantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockReason">السبب (اختياري)</label>
+                        <input type="text" id="stockReason">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">تحديث المخزون</button>
+                        <button type="button" class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                    </div>
+                </form>
+            `;
+
+            BatchesManager.showCustomModal(modalContent);
+            
+            document.getElementById('updateStockForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.processStockUpdate(itemId, item);
+            });
+
+        } catch (error) {
+            console.error('Error updating stock:', error);
+            alert('حدث خطأ في فتح نموذج تحديث المخزون');
+        }
+    }
+
+    static async processStockUpdate(itemId, item) {
+        const operation = document.getElementById('stockOperation').value;
+        const quantity = parseFloat(document.getElementById('stockQuantity').value);
+        const reason = document.getElementById('stockReason').value;
+
+        let newQuantity = item.quantity;
+
+        switch(operation) {
+            case 'add':
+                newQuantity += quantity;
+                break;
+            case 'subtract':
+                newQuantity -= quantity;
+                break;
+            case 'set':
+                newQuantity = quantity;
+                break;
+        }
+
+        if (newQuantity < 0) {
+            alert('الكمية لا يمكن أن تكون سالبة');
+            return;
+        }
+
+        const updateData = {
+            ...item,
+            quantity: newQuantity,
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            await DatabaseManager.update('inventory', itemId, updateData);
+            closeModal();
+            this.loadInventory();
+            window.app.showNotification('تم تحديث المخزون بنجاح');
+        } catch (error) {
+            console.error('Error processing stock update:', error);
+            alert('حدث خطأ في تحديث المخزون');
+        }
+    }
+                                                             }
