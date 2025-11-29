@@ -24,7 +24,6 @@ class BatchesManager {
         }
 
         container.innerHTML = batches.map(batch => {
-            // التحقق من وجود البيانات
             const batchName = batch.name || 'بدون اسم';
             const breedType = batch.breedType || 'غير محدد';
             const chicksCount = batch.chicksCount ? batch.chicksCount.toLocaleString() : '0';
@@ -84,7 +83,8 @@ class BatchesManager {
     static formatDate(dateString) {
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('ar-SA', {
+            // استخدام التاريخ الميلادي
+            return date.toLocaleDateString('ar-EG', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit'
@@ -151,7 +151,7 @@ class BatchesManager {
                         <strong>السلالة:</strong> ${batch.breedType || 'غير محدد'}
                     </div>
                     <div class="detail-item">
-                        <strong>سعر الكتكوت:</strong> ${batch.chickPrice ? this.formatCurrency(batch.chickPrice) : '0'}
+                        <strong>سعر الكتكوت:</strong> ${batch.chickPrice ? this.formatCurrency(batch.chickPrice) : '0 ج.س'}
                     </div>
                     <div class="detail-item">
                         <strong>العمر:</strong> ${this.calculateAge(batch.startDate)} يوم
@@ -165,6 +165,9 @@ class BatchesManager {
                 <button class="btn-primary" onclick="BatchesManager.editBatch(${batch.id})">
                     تعديل
                 </button>
+                <button class="btn-secondary" onclick="BatchesManager.shareBatch(${batch.id})">
+                    📱 مشاركة
+                </button>
                 <button class="btn-secondary" onclick="closeModal()">
                     إغلاق
                 </button>
@@ -174,27 +177,146 @@ class BatchesManager {
         this.showCustomModal(modalContent);
     }
 
+    static async editBatch(batchId) {
+        try {
+            const batch = await DatabaseManager.get('batches', batchId);
+            if (!batch) {
+                alert('الدفعة غير موجودة');
+                return;
+            }
+
+            const modalContent = `
+                <div class="modal-header">
+                    <h3>تعديل الدفعة: ${batch.name}</h3>
+                    <button class="close-btn" onclick="closeModal()">×</button>
+                </div>
+                <form id="editBatchForm" class="modal-form">
+                    <div class="form-group">
+                        <label for="editBatchName">اسم الدفعة</label>
+                        <input type="text" id="editBatchName" value="${batch.name || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStartDate">تاريخ البدء</label>
+                        <input type="date" id="editStartDate" value="${batch.startDate || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editChicksCount">عدد الكتاكيت</label>
+                        <input type="number" id="editChicksCount" value="${batch.chicksCount || 0}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBreedType">السلالة</label>
+                        <select id="editBreedType" required>
+                            <option value="كوب" ${batch.breedType === 'كوب' ? 'selected' : ''}>كوب</option>
+                            <option value="روس" ${batch.breedType === 'روس' ? 'selected' : ''}>روس</option>
+                            <option value="هبرد" ${batch.breedType === 'هبرد' ? 'selected' : ''}>هبرد</option>
+                            <option value="أخرى" ${batch.breedType === 'أخرى' ? 'selected' : ''}>أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editChickPrice">سعر الكتكوت (ج.س)</label>
+                        <input type="number" step="0.01" id="editChickPrice" value="${batch.chickPrice || 0}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatus">الحالة</label>
+                        <select id="editStatus" required>
+                            <option value="active" ${batch.status === 'active' ? 'selected' : ''}>نشط</option>
+                            <option value="completed" ${batch.status === 'completed' ? 'selected' : ''}>مكتمل</option>
+                            <option value="cancelled" ${batch.status === 'cancelled' ? 'selected' : ''}>ملغي</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">حفظ التعديلات</button>
+                        <button type="button" class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                    </div>
+                </form>
+            `;
+
+            this.showCustomModal(modalContent);
+            
+            document.getElementById('editBatchForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateBatch(batchId);
+            });
+
+        } catch (error) {
+            console.error('Error editing batch:', error);
+            alert('حدث خطأ في فتح نموذج التعديل');
+        }
+    }
+
+    static async updateBatch(batchId) {
+        const batchData = {
+            name: document.getElementById('editBatchName').value,
+            startDate: document.getElementById('editStartDate').value,
+            chicksCount: parseInt(document.getElementById('editChicksCount').value),
+            breedType: document.getElementById('editBreedType').value,
+            chickPrice: parseFloat(document.getElementById('editChickPrice').value),
+            status: document.getElementById('editStatus').value,
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            await DatabaseManager.update('batches', batchId, batchData);
+            closeModal();
+            this.loadBatches();
+            window.app.showNotification('تم تعديل الدفعة بنجاح');
+        } catch (error) {
+            console.error('Error updating batch:', error);
+            alert('حدث خطأ في تعديل الدفعة');
+        }
+    }
+
+    static async shareBatch(batchId) {
+        try {
+            const batch = await DatabaseManager.get('batches', batchId);
+            if (!batch) {
+                alert('الدفعة غير موجودة');
+                return;
+            }
+
+            const message = `🐔 دفعة دواجن - ${batch.name}
+            
+السلالة: ${batch.breedType}
+عدد الكتاكيت: ${batch.chicksCount?.toLocaleString() || '0'}
+تاريخ البدء: ${this.formatDate(batch.startDate)}
+العمر: ${this.calculateAge(batch.startDate)} يوم
+الحالة: ${this.getStatusText(batch.status)}
+
+---
+نظام شمسين لإدارة مزارع الدواجن`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+        } catch (error) {
+            console.error('Error sharing batch:', error);
+            alert('حدث خطأ في المشاركة');
+        }
+    }
+
     static formatCurrency(amount) {
         return new Intl.NumberFormat('ar-SD', {
-            style: 'currency',
-            currency: 'SDG'
-        }).format(amount);
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount) + ' ج.س';
     }
 
     static showCustomModal(content) {
         const modalOverlay = document.getElementById('modal-overlay');
-        const existingModal = document.getElementById('custom-modal');
+        const customModal = document.getElementById('custom-modal');
         
-        if (existingModal) {
-            existingModal.remove();
+        if (customModal) {
+            customModal.innerHTML = content;
+        } else {
+            const modal = document.createElement('div');
+            modal.id = 'custom-modal';
+            modal.className = 'modal';
+            modal.innerHTML = content;
+            modalOverlay.appendChild(modal);
         }
-
-        const modal = document.createElement('div');
-        modal.id = 'custom-modal';
-        modal.className = 'modal';
-        modal.innerHTML = content;
         
-        modalOverlay.appendChild(modal);
         modalOverlay.style.display = 'flex';
     }
 
@@ -242,7 +364,6 @@ class BatchesManager {
 
             this.showCustomModal(modalContent);
             
-            // إضافة مستمع للنموذج
             document.getElementById('dailyRecordForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveDailyRecord(batchId);
@@ -275,9 +396,4 @@ class BatchesManager {
             alert('حدث خطأ في حفظ التسجيل اليومي');
         }
     }
-
-    static async editBatch(batchId) {
-        // تنفيذ تعديل الدفعة
-        console.log('Editing batch:', batchId);
-    }
-                }
+        }
