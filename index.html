@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شمسين - نظام إدارة مزارع الدواجن</title>
+    <meta name="description" content="نظام متكامل لإدارة مزارع الدواجن اللاحم">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="icons/icon-72x72.png">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h1>🐔 شمسين</h1>
+        </div>
+        <div class="nav-menu">
+            <button class="nav-toggle">☰</button>
+            <ul class="nav-links">
+                <li><a href="#dashboard" class="nav-link active">🏠 الرئيسية</a></li>
+                <li><a href="#batches" class="nav-link">🐔 الدفعات</a></li>
+                <li><a href="#finance" class="nav-link">💰 المالية</a></li>
+                <li><a href="#inventory" class="nav-link">📦 المخزون</a></li>
+                <li><a href="#reports" class="nav-link">📊 التقارير</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+        <!-- لوحة التحكم -->
+        <section id="dashboard" class="page active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <h3>الدفعات النشطة</h3>
+                    <div class="stat-value" id="active-batches">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>إجمالي الربح</h3>
+                    <div class="stat-value" id="total-profit">0 ر.س</div>
+                </div>
+                <div class="stat-card">
+                    <h3>مخزون العلف</h3>
+                    <div class="stat-value" id="feed-stock">0 كجم</div>
+                </div>
+                <div class="stat-card">
+                    <h3>التكاليف الشهرية</h3>
+                    <div class="stat-value" id="monthly-costs">0 ر.س</div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <h2>إجراءات سريعة</h2>
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="showPage('batches')">
+                        🐔 دفعة جديدة
+                    </button>
+                    <button class="btn-secondary" onclick="showPage('finance')">
+                        💰 تسجيل مصروف
+                    </button>
+                    <button class="btn-secondary" onclick="showPage('inventory')">
+                        📦 إدارة المخزون
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- إدارة الدفعات -->
+        <section id="batches" class="page">
+            <div class="page-header">
+                <h2>🐔 إدارة الدفعات</h2>
+                <button class="btn-primary" onclick="showBatchForm()">
+                    + دفعة جديدة
+                </button>
+            </div>
+            <div id="batches-list" class="cards-container">
+                <!-- سيتم ملؤها ديناميكياً -->
+            </div>
+        </section>
+
+        <!-- النظام المالي -->
+        <section id="finance" class="page">
+            <div class="page-header">
+                <h2>💰 النظام المالي</h2>
+                <div class="finance-buttons">
+                    <button class="btn-primary" onclick="showExpenseForm()">
+                        + مصروف
+                    </button>
+                    <button class="btn-success" onclick="showIncomeForm()">
+                        + إيراد
+                    </button>
+                </div>
+            </div>
+            <div class="finance-summary">
+                <div class="summary-card">
+                    <h3>الإيرادات</h3>
+                    <div class="amount positive" id="total-income">0 ر.س</div>
+                </div>
+                <div class="summary-card">
+                    <h3>المصروفات</h3>
+                    <div class="amount negative" id="total-expenses">0 ر.س</div>
+                </div>
+                <div class="summary-card">
+                    <h3>صافي الربح</h3>
+                    <div class="amount" id="net-profit">0 ر.س</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- إدارة المخزون -->
+        <section id="inventory" class="page">
+            <div class="page-header">
+                <h2>📦 إدارة المخزون</h2>
+                <button class="btn-primary" onclick="showInventoryForm()">
+                    + عنصر جديد
+                </button>
+            </div>
+            <div id="inventory-list" class="cards-container">
+                <!-- سيتم ملؤها ديناميكياً -->
+            </div>
+        </section>
+
+        <!-- التقارير -->
+        <section id="reports" class="page">
+            <div class="page-header">
+                <h2>📊 التقارير والتحليلات</h2>
+            </div>
+            <div class="reports-grid">
+                <div class="report-card">
+                    <h3>تقرير الدفعة</h3>
+                    <p>بيانات شاملة عن دفعة محددة</p>
+                    <button class="btn-primary" onclick="generateBatchReport()">
+                        إنشاء التقرير
+                    </button>
+                </div>
+                <div class="report-card">
+                    <h3>تقرير مالي</h3>
+                    <p>الإيرادات والمصروفات والربح</p>
+                    <button class="btn-primary" onclick="generateFinancialReport()">
+                        إنشاء التقرير
+                    </button>
+                </div>
+                <div class="report-card">
+                    <h3>تحليل الربحية</h3>
+                    <p>هامش الربح وتكلفة الوحدة</p>
+                    <button class="btn-primary" onclick="generateProfitabilityReport()">
+                        إنشاء التقرير
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- النماذج المنبثقة -->
+    <div id="modal-overlay" class="modal-overlay">
+        <!-- نماذج الدفعات -->
+        <div id="batch-form" class="modal">
+            <div class="modal-header">
+                <h3>🐔 دفعة جديدة</h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <form id="batchForm" class="modal-form">
+                <div class="form-group">
+                    <label for="batchName">اسم الدفعة</label>
+                    <input type="text" id="batchName" required>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">تاريخ البدء</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="chicksCount">عدد الكتاكيت</label>
+                    <input type="number" id="chicksCount" required>
+                </div>
+                <div class="form-group">
+                    <label for="breedType">السلالة</label>
+                    <select id="breedType" required>
+                        <option value="كوب">كوب</option>
+                        <option value="روس">روس</option>
+                        <option value="هبرد">هبرد</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="chickPrice">سعر الكتكوت (ر.س)</label>
+                    <input type="number" step="0.01" id="chickPrice" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">حفظ الدفعة</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- نماذج أخرى ستضاف هنا -->
+    </div>
+
+    <!-- Service Worker التسجيل -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service Worker مسجل'))
+                .catch(err => console.log('خطأ في تسجيل Service Worker'));
+        }
+    </script>
+
+    <script src="js/db.js"></script>
+    <script src="js/batches.js"></script>
+    <script src="js/finance.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
