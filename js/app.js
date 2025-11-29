@@ -2,17 +2,34 @@
 class ShamsinApp {
     constructor() {
         this.currentPage = 'dashboard';
+        this.isInitialized = false;
         this.init();
     }
 
-    init() {
-        this.setupEventListeners();
-        this.loadDashboardData();
-        this.checkLowStock();
-        this.requestNotificationPermission();
+    async init() {
+        try {
+            console.log('بدء تهيئة التطبيق...');
+            
+            // تهيئة قاعدة البيانات أولاً
+            await DatabaseManager.getDB();
+            
+            this.setupEventListeners();
+            await this.loadDashboardData();
+            this.checkLowStock();
+            this.requestNotificationPermission();
+            
+            this.isInitialized = true;
+            console.log('تم تهيئة التطبيق بنجاح');
+            
+        } catch (error) {
+            console.error('فشل في تهيئة التطبيق:', error);
+            this.showError('فشل في تحميل التطبيق. يرجى تحديث الصفحة.');
+        }
     }
 
     setupEventListeners() {
+        console.log('إعداد مستمعي الأحداث...');
+        
         // التنقل
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -23,25 +40,50 @@ class ShamsinApp {
         });
 
         // زر القائمة المتنقلة
-        document.querySelector('.nav-toggle').addEventListener('click', () => {
-            document.querySelector('.nav-links').classList.toggle('active');
-        });
+        const navToggle = document.querySelector('.nav-toggle');
+        if (navToggle) {
+            navToggle.addEventListener('click', () => {
+                document.querySelector('.nav-links').classList.toggle('active');
+            });
+        }
 
         // نماذج الدفعات
-        document.getElementById('batchForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveBatch();
-        });
+        const batchForm = document.getElementById('batchForm');
+        if (batchForm) {
+            batchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveBatch();
+            });
+        }
 
         // إغلاق النماذج عند النقر خارجها
-        document.getElementById('modal-overlay').addEventListener('click', (e) => {
-            if (e.target.id === 'modal-overlay') {
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'modal-overlay') {
+                    this.closeModal();
+                }
+            });
+        }
+
+        // إغلاق النماذج بزر ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
                 this.closeModal();
             }
         });
+
+        console.log('تم إعداد مستمعي الأحداث بنجاح');
     }
 
     showPage(pageName) {
+        if (!this.isInitialized) {
+            console.warn('التطبيق غير مهيء بعد، لا يمكن تغيير الصفحة');
+            return;
+        }
+
+        console.log('تحويل إلى الصفحة:', pageName);
+        
         // إخفاء جميع الصفحات
         document.querySelectorAll('.page').forEach(page => {
             page.classList.remove('active');
@@ -56,6 +98,8 @@ class ShamsinApp {
         const targetPage = document.getElementById(pageName);
         if (targetPage) {
             targetPage.classList.add('active');
+        } else {
+            console.error('الصفحة غير موجودة:', pageName);
         }
 
         // تنشيط رابط التنقل
@@ -65,32 +109,45 @@ class ShamsinApp {
         }
 
         // إغلاق القائمة المتنقلة على الأجهزة الصغيرة
-        document.querySelector('.nav-links').classList.remove('active');
+        const navLinks = document.querySelector('.nav-links');
+        if (navLinks) {
+            navLinks.classList.remove('active');
+        }
 
         this.currentPage = pageName;
         this.loadPageData(pageName);
     }
 
     loadPageData(pageName) {
+        console.log('تحميل بيانات الصفحة:', pageName);
+        
         switch(pageName) {
             case 'batches':
-                if (typeof BatchesManager !== 'undefined') {
+                if (window.BatchesManager && typeof BatchesManager.loadBatches === 'function') {
                     BatchesManager.loadBatches();
+                } else {
+                    console.error('BatchesManager غير متاح');
                 }
                 break;
             case 'finance':
-                if (typeof FinanceManager !== 'undefined') {
+                if (window.FinanceManager && typeof FinanceManager.loadFinancialData === 'function') {
                     FinanceManager.loadFinancialData();
+                } else {
+                    console.error('FinanceManager غير متاح');
                 }
                 break;
             case 'inventory':
-                if (typeof InventoryManager !== 'undefined') {
+                if (window.InventoryManager && typeof InventoryManager.loadInventory === 'function') {
                     InventoryManager.loadInventory();
+                } else {
+                    console.error('InventoryManager غير متاح');
                 }
                 break;
             case 'reports':
-                if (typeof ReportsManager !== 'undefined') {
+                if (window.ReportsManager && typeof ReportsManager.loadReports === 'function') {
                     ReportsManager.loadReports();
+                } else {
+                    console.error('ReportsManager غير متاح');
                 }
                 break;
         }
@@ -98,15 +155,17 @@ class ShamsinApp {
 
     async loadDashboardData() {
         try {
+            console.log('تحميل بيانات لوحة التحكم...');
+            
             const db = await DatabaseManager.getDB();
             
             // الدفعات النشطة
-            const batches = await db.getAll('batches');
+            const batches = await DatabaseManager.getAll('batches');
             const activeBatches = batches.filter(b => b.status === 'active');
-            document.getElementById('active-batches').textContent = activeBatches.length;
+            this.updateElementText('active-batches', activeBatches.length);
 
             // البيانات المالية
-            const transactions = await db.getAll('transactions');
+            const transactions = await DatabaseManager.getAll('transactions');
             const totalIncome = transactions
                 .filter(t => t.type === 'income')
                 .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -117,23 +176,28 @@ class ShamsinApp {
 
             const netProfit = totalIncome - totalExpenses;
             
-            document.getElementById('total-profit').textContent = 
-                `${this.formatCurrency(netProfit)}`;
-
-            document.getElementById('monthly-costs').textContent = 
-                `${this.formatCurrency(this.getMonthlyCosts(transactions))}`;
+            this.updateElementText('total-profit', this.formatCurrency(netProfit));
+            this.updateElementText('monthly-costs', this.formatCurrency(this.getMonthlyCosts(transactions)));
 
             // مخزون العلف
-            const inventory = await db.getAll('inventory');
+            const inventory = await DatabaseManager.getAll('inventory');
             const feedStock = inventory
                 .filter(item => item.category === 'feed')
                 .reduce((sum, item) => sum + (item.quantity || 0), 0);
             
-            document.getElementById('feed-stock').textContent = 
-                `${feedStock.toLocaleString()} كجم`;
+            this.updateElementText('feed-stock', `${feedStock.toLocaleString()} كجم`);
+
+            console.log('تم تحميل بيانات لوحة التحكم بنجاح');
 
         } catch (error) {
-            console.error('Error loading dashboard data:', error);
+            console.error('خطأ في تحميل بيانات لوحة التحكم:', error);
+        }
+    }
+
+    updateElementText(elementId, text) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = text;
         }
     }
 
@@ -164,8 +228,7 @@ class ShamsinApp {
 
     async checkLowStock() {
         try {
-            const db = await DatabaseManager.getDB();
-            const inventory = await db.getAll('inventory');
+            const inventory = await DatabaseManager.getAll('inventory');
             
             const lowStockItems = inventory.filter(item => 
                 item.quantity <= item.minimumStock
@@ -175,107 +238,146 @@ class ShamsinApp {
                 this.showNotification(`تحذير: ${lowStockItems.length} عنصر منخفض في المخزون`);
             }
         } catch (error) {
-            console.error('Error checking low stock:', error);
+            console.error('خطأ في فحص المخزون المنخفض:', error);
         }
     }
 
     async requestNotificationPermission() {
-        if ('Notification' in window) {
+        if ('Notification' in window && Notification.permission === 'default') {
             try {
-                const permission = await Notification.requestPermission();
-                console.log('Notification permission:', permission);
+                await Notification.requestPermission();
             } catch (error) {
-                console.error('Error requesting notification permission:', error);
+                console.error('خطأ في طلب إذن الإشعارات:', error);
             }
         }
     }
 
-    showNotification(message) {
+    showNotification(message, type = 'info') {
+        console.log(`إشعار: ${message}`);
+        
+        // عرض toast
+        this.showToast(message, type);
+        
+        // إشعار المتصفح
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('شمسين - تنبيه', {
                 body: message,
                 icon: '/icons/icon-72x72.png'
             });
         }
-        
-        // عرض تنبيه في الصفحة أيضاً
-        this.showToast(message);
     }
 
-    showToast(message) {
+    showToast(message, type = 'info') {
         const toast = document.createElement('div');
+        const bgColor = type === 'error' ? '#f44336' : type === 'success' ? '#4caf50' : '#ff9800';
+        
         toast.style.cssText = `
             position: fixed;
             top: 100px;
-            right: 20px;
-            background: var(--warning-color);
-            color: #000;
-            padding: 1rem;
+            left: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
             border-radius: 5px;
-            box-shadow: var(--shadow);
-            z-index: 3000;
-            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 400px;
+            font-weight: bold;
+            animation: slideIn 0.3s ease-out;
         `;
-        toast.textContent = message;
         
+        toast.textContent = message;
         document.body.appendChild(toast);
         
         setTimeout(() => {
-            document.body.removeChild(toast);
-        }, 5000);
+            if (toast.parentNode) {
+                toast.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }, 4000);
+    }
+
+    showError(message) {
+        this.showNotification(message, 'error');
+    }
+
+    showSuccess(message) {
+        this.showNotification(message, 'success');
     }
 
     // إدارة النماذج المنبثقة
     showModal(modalId) {
-        document.getElementById('modal-overlay').style.display = 'flex';
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none';
-        });
-        const targetModal = document.getElementById(modalId);
-        if (targetModal) {
-            targetModal.style.display = 'block';
+        console.log('فتح النموذج:', modalId);
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.style.display = 'flex';
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+            const targetModal = document.getElementById(modalId);
+            if (targetModal) {
+                targetModal.style.display = 'block';
+            } else {
+                console.error('النموذج غير موجود:', modalId);
+            }
         }
     }
 
     closeModal() {
-        document.getElementById('modal-overlay').style.display = 'none';
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none';
-        });
+        console.log('إغلاق النماذج');
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.style.display = 'none';
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+            
+            // تنظيف النموذج المخصص
+            const customModal = document.getElementById('custom-modal');
+            if (customModal) {
+                customModal.remove();
+            }
+        }
     }
 
     async saveBatch() {
+        console.log('محاولة حفظ دفعة جديدة...');
+        
         const batchData = {
             name: document.getElementById('batchName').value,
             startDate: document.getElementById('startDate').value,
             chicksCount: parseInt(document.getElementById('chicksCount').value),
             breedType: document.getElementById('breedType').value,
             chickPrice: parseFloat(document.getElementById('chickPrice').value),
-            status: 'active',
-            createdAt: new Date().toISOString()
+            status: 'active'
         };
 
         // التحقق من البيانات
         if (!batchData.name || !batchData.startDate || !batchData.chicksCount || !batchData.chickPrice) {
-            alert('يرجى ملء جميع الحقول المطلوبة');
+            this.showError('يرجى ملء جميع الحقول المطلوبة');
             return;
         }
 
         try {
-            await BatchesManager.saveBatch(batchData);
+            await DatabaseManager.add('batches', batchData);
             this.closeModal();
             document.getElementById('batchForm').reset();
             this.showPage('batches');
-            this.showNotification('تم حفظ الدفعة بنجاح');
+            this.showSuccess('تم حفظ الدفعة بنجاح');
         } catch (error) {
-            console.error('Error saving batch:', error);
-            alert('حدث خطأ في حفظ الدفعة');
+            console.error('خطأ في حفظ الدفعة:', error);
+            this.showError('حدث خطأ في حفظ الدفعة');
         }
     }
 }
 
 // تهيئة التطبيق عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('تم تحميل DOM، بدء التطبيق...');
     window.app = new ShamsinApp();
 });
 
@@ -283,12 +385,16 @@ document.addEventListener('DOMContentLoaded', () => {
 function showPage(pageName) {
     if (window.app) {
         window.app.showPage(pageName);
+    } else {
+        console.error('التطبيق غير مهيء بعد');
     }
 }
 
 function showModal(modalId) {
     if (window.app) {
         window.app.showModal(modalId);
+    } else {
+        console.error('التطبيق غير مهيء بعد');
     }
 }
 
@@ -303,49 +409,55 @@ function showBatchForm() {
 }
 
 function showExpenseForm() {
-    if (typeof FinanceManager !== 'undefined') {
+    if (window.FinanceManager && typeof FinanceManager.showExpenseForm === 'function') {
         FinanceManager.showExpenseForm();
     } else {
-        alert('وحدة المالية غير محملة');
+        console.error('FinanceManager غير متاح');
+        window.app?.showError('وحدة المالية غير جاهزة بعد');
     }
 }
 
 function showIncomeForm() {
-    if (typeof FinanceManager !== 'undefined') {
+    if (window.FinanceManager && typeof FinanceManager.showIncomeForm === 'function') {
         FinanceManager.showIncomeForm();
     } else {
-        alert('وحدة المالية غير محملة');
+        console.error('FinanceManager غير متاح');
+        window.app?.showError('وحدة المالية غير جاهزة بعد');
     }
 }
 
 function showInventoryForm() {
-    if (typeof InventoryManager !== 'undefined') {
+    if (window.InventoryManager && typeof InventoryManager.showInventoryForm === 'function') {
         InventoryManager.showInventoryForm();
     } else {
-        alert('وحدة المخزون غير محملة');
+        console.error('InventoryManager غير متاح');
+        window.app?.showError('وحدة المخزون غير جاهزة بعد');
     }
 }
 
 function generateBatchReport() {
-    if (typeof ReportsManager !== 'undefined') {
+    if (window.ReportsManager && typeof ReportsManager.generateBatchReport === 'function') {
         ReportsManager.generateBatchReport();
     } else {
-        alert('وحدة التقارير غير محملة');
+        console.error('ReportsManager غير متاح');
+        window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
 }
 
 function generateFinancialReport() {
-    if (typeof ReportsManager !== 'undefined') {
+    if (window.ReportsManager && typeof ReportsManager.generateFinancialReport === 'function') {
         ReportsManager.generateFinancialReport();
     } else {
-        alert('وحدة التقارير غير محملة');
+        console.error('ReportsManager غير متاح');
+        window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
 }
 
 function generateProfitabilityReport() {
-    if (typeof ReportsManager !== 'undefined') {
+    if (window.ReportsManager && typeof ReportsManager.generateProfitabilityReport === 'function') {
         ReportsManager.generateProfitabilityReport();
     } else {
-        alert('وحدة التقارير غير محملة');
+        console.error('ReportsManager غير متاح');
+        window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
-                                  }
+                }
