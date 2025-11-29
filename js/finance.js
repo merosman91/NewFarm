@@ -40,7 +40,10 @@ class FinanceManager {
         const container = document.getElementById('finance-transactions');
         if (!container) return;
 
-        if (transactions.length === 0) {
+        // ترتيب المعاملات من الأحدث إلى الأقدم
+        const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (sortedTransactions.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <p>لا توجد معاملات مالية</p>
@@ -49,7 +52,7 @@ class FinanceManager {
             return;
         }
 
-        container.innerHTML = transactions.map(transaction => `
+        container.innerHTML = sortedTransactions.map(transaction => `
             <div class="transaction-item ${transaction.type}">
                 <div class="transaction-info">
                     <h4>${transaction.description || 'بدون وصف'}</h4>
@@ -73,7 +76,8 @@ class FinanceManager {
             'utilities': 'كهرباء وماء',
             'chicken_sale': 'بيع دواجن',
             'egg_sale': 'بيع بيض',
-            'other_income': 'إيرادات أخرى'
+            'other_income': 'إيرادات أخرى',
+            'other': 'أخرى'
         };
         return categories[category] || category;
     }
@@ -81,7 +85,12 @@ class FinanceManager {
     static formatDate(dateString) {
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('ar-SA');
+            // استخدام التاريخ الميلادي
+            return date.toLocaleDateString('ar-EG', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
         } catch (error) {
             return 'تاريخ غير محدد';
         }
@@ -148,10 +157,10 @@ class FinanceManager {
             closeModal();
             this.loadFinancialData();
             window.app.loadDashboardData();
-            window.app.showNotification('تم حفظ المصروف بنجاح');
+            window.app.showNotification('تم إضافة المصروف بنجاح'); // تم التصحيح هنا
         } catch (error) {
             console.error('Error saving expense:', error);
-            alert('حدث خطأ في حفظ المصروف');
+            window.app.showNotification('حدث خطأ في إضافة المصروف'); // تم التصحيح هنا
         }
     }
 
@@ -212,10 +221,10 @@ class FinanceManager {
             closeModal();
             this.loadFinancialData();
             window.app.loadDashboardData();
-            window.app.showNotification('تم حفظ الإيراد بنجاح');
+            window.app.showNotification('تم إضافة الإيراد بنجاح'); // تم التصحيح هنا
         } catch (error) {
             console.error('Error saving income:', error);
-            alert('حدث خطأ في حفظ الإيراد');
+            window.app.showNotification('حدث خطأ في إضافة الإيراد'); // تم التصحيح هنا
         }
     }
-}
+                }
