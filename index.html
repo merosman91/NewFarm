@@ -79,35 +79,40 @@
             </div>
         </section>
 
-        <!-- النظام المالي -->
-        <section id="finance" class="page">
-            <div class="page-header">
-                <h2>💰 النظام المالي</h2>
-                <div class="finance-buttons">
-                    <button class="btn-primary" onclick="showExpenseForm()">
-                        + مصروف
-                    </button>
-                    <button class="btn-success" onclick="showIncomeForm()">
-                        + إيراد
-                    </button>
-                </div>
-            </div>
-            <div class="finance-summary">
-                <div class="summary-card">
-                    <h3>الإيرادات</h3>
-                    <div class="amount positive" id="total-income">0 ر.س</div>
-                </div>
-                <div class="summary-card">
-                    <h3>المصروفات</h3>
-                    <div class="amount negative" id="total-expenses">0 ر.س</div>
-                </div>
-                <div class="summary-card">
-                    <h3>صافي الربح</h3>
-                    <div class="amount" id="net-profit">0 ر.س</div>
-                </div>
-            </div>
-        </section>
-
+        <!-- في قسم النظام المالي -->
+<section id="finance" class="page">
+    <div class="page-header">
+        <h2>💰 النظام المالي</h2>
+        <div class="finance-buttons">
+            <button class="btn-primary" onclick="FinanceManager.showExpenseForm()">
+                + مصروف
+            </button>
+            <button class="btn-success" onclick="FinanceManager.showIncomeForm()">
+                + إيراد
+            </button>
+        </div>
+    </div>
+    <div class="finance-summary">
+        <div class="summary-card">
+            <h3>الإيرادات</h3>
+            <div class="amount positive" id="total-income">0 ج.س</div>
+        </div>
+        <div class="summary-card">
+            <h3>المصروفات</h3>
+            <div class="amount negative" id="total-expenses">0 ج.س</div>
+        </div>
+        <div class="summary-card">
+            <h3>صافي الربح</h3>
+            <div class="amount" id="net-profit">0 ج.س</div>
+        </div>
+    </div>
+    <div class="transactions-list">
+        <h3>آخر المعاملات</h3>
+        <div id="finance-transactions" class="transactions-container">
+            <!-- سيتم ملؤها ديناميكياً -->
+        </div>
+    </div>
+</section>
         <!-- إدارة المخزون -->
         <section id="inventory" class="page">
             <div class="page-header">
