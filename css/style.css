@@ -533,3 +533,39 @@ body {
     grid-template-columns: 1fr;
     gap: 0.5rem;
     }
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+/* تحسين التحميل */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '...جاري التحميل';
+    display: block;
+    text-align: center;
+    padding: 1rem;
+    font-weight: bold;
+}
