@@ -499,4 +499,37 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
-  }
+} 
+
+/* حالة المخزون */
+.inventory-card.low-stock {
+    border-right: 4px solid var(--danger-color);
+}
+
+.inventory-card.normal-stock {
+    border-right: 4px solid var(--secondary-color);
+}
+
+.stock-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.stock-status.low-stock {
+    background: #ffebee;
+    color: var(--danger-color);
+}
+
+.stock-status.normal-stock {
+    background: #e8f5e8;
+    color: var(--secondary-color);
+}
+
+/* معلومات المخزون */
+.inventory-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    }
