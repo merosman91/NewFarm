@@ -38,7 +38,7 @@
                 </div>
                 <div class="stat-card">
                     <h3>إجمالي الربح</h3>
-                    <div class="stat-value" id="total-profit">0 ر.س</div>
+                    <div class="stat-value" id="total-profit">0 ج.س</div>
                 </div>
                 <div class="stat-card">
                     <h3>مخزون العلف</h3>
@@ -46,20 +46,20 @@
                 </div>
                 <div class="stat-card">
                     <h3>التكاليف الشهرية</h3>
-                    <div class="stat-value" id="monthly-costs">0 ر.س</div>
+                    <div class="stat-value" id="monthly-costs">0 ج.س</div>
                 </div>
             </div>
             
             <div class="quick-actions">
                 <h2>إجراءات سريعة</h2>
                 <div class="action-buttons">
-                    <button class="btn-primary" onclick="showPage('batches')">
+                    <button class="btn-primary" onclick="showBatchForm()">
                         🐔 دفعة جديدة
                     </button>
-                    <button class="btn-secondary" onclick="showPage('finance')">
+                    <button class="btn-secondary" onclick="showExpenseForm()">
                         💰 تسجيل مصروف
                     </button>
-                    <button class="btn-secondary" onclick="showPage('inventory')">
+                    <button class="btn-secondary" onclick="showInventoryForm()">
                         📦 إدارة المخزون
                     </button>
                 </div>
@@ -79,40 +79,41 @@
             </div>
         </section>
 
-        <!-- في قسم النظام المالي -->
-<section id="finance" class="page">
-    <div class="page-header">
-        <h2>💰 النظام المالي</h2>
-        <div class="finance-buttons">
-            <button class="btn-primary" onclick="FinanceManager.showExpenseForm()">
-                + مصروف
-            </button>
-            <button class="btn-success" onclick="FinanceManager.showIncomeForm()">
-                + إيراد
-            </button>
-        </div>
-    </div>
-    <div class="finance-summary">
-        <div class="summary-card">
-            <h3>الإيرادات</h3>
-            <div class="amount positive" id="total-income">0 ج.س</div>
-        </div>
-        <div class="summary-card">
-            <h3>المصروفات</h3>
-            <div class="amount negative" id="total-expenses">0 ج.س</div>
-        </div>
-        <div class="summary-card">
-            <h3>صافي الربح</h3>
-            <div class="amount" id="net-profit">0 ج.س</div>
-        </div>
-    </div>
-    <div class="transactions-list">
-        <h3>آخر المعاملات</h3>
-        <div id="finance-transactions" class="transactions-container">
-            <!-- سيتم ملؤها ديناميكياً -->
-        </div>
-    </div>
-</section>
+        <!-- النظام المالي -->
+        <section id="finance" class="page">
+            <div class="page-header">
+                <h2>💰 النظام المالي</h2>
+                <div class="finance-buttons">
+                    <button class="btn-primary" onclick="showExpenseForm()">
+                        + مصروف
+                    </button>
+                    <button class="btn-success" onclick="showIncomeForm()">
+                        + إيراد
+                    </button>
+                </div>
+            </div>
+            <div class="finance-summary">
+                <div class="summary-card">
+                    <h3>الإيرادات</h3>
+                    <div class="amount positive" id="total-income">0 ج.س</div>
+                </div>
+                <div class="summary-card">
+                    <h3>المصروفات</h3>
+                    <div class="amount negative" id="total-expenses">0 ج.س</div>
+                </div>
+                <div class="summary-card">
+                    <h3>صافي الربح</h3>
+                    <div class="amount" id="net-profit">0 ج.س</div>
+                </div>
+            </div>
+            <div class="transactions-list">
+                <h3>آخر المعاملات</h3>
+                <div id="finance-transactions" class="transactions-container">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </div>
+        </section>
+
         <!-- إدارة المخزون -->
         <section id="inventory" class="page">
             <div class="page-header">
@@ -188,7 +189,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="chickPrice">سعر الكتكوت (ر.س)</label>
+                    <label for="chickPrice">سعر الكتكوت (ج.س)</label>
                     <input type="number" step="0.01" id="chickPrice" required>
                 </div>
                 <div class="form-actions">
@@ -198,7 +199,10 @@
             </form>
         </div>
 
-        <!-- نماذج أخرى ستضاف هنا -->
+        <!-- نماذج أخرى -->
+        <div id="custom-modal" class="modal">
+            <!-- سيتم ملؤها ديناميكياً -->
+        </div>
     </div>
 
     <!-- Service Worker التسجيل -->
@@ -217,4 +221,4 @@
     <script src="js/reports.js"></script>
     <script src="js/app.js"></script>
 </body>
-</html>
+                                       </html>
