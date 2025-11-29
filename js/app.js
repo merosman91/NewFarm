@@ -212,3 +212,27 @@ function closeModal() {
 function showBatchForm() {
     showModal('batch-form');
 }
+
+function showExpenseForm() {
+    FinanceManager.showExpenseForm();
+}
+
+function showIncomeForm() {
+    FinanceManager.showIncomeForm();
+}
+
+function showInventoryForm() {
+    InventoryManager.showInventoryForm();
+}
+
+function generateBatchReport() {
+    ReportsManager.generateBatchReport();
+}
+
+function generateFinancialReport() {
+    ReportsManager.generateFinancialReport();
+}
+
+function generateProfitabilityReport() {
+    ReportsManager.generateProfitabilityReport();
+    }
