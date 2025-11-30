@@ -1,12 +1,40 @@
 class InventoryManager {
     static async loadInventory() {
         try {
+            console.log('تحميل بيانات المخزون...');
             const inventory = await DatabaseManager.getAll('inventory');
             this.renderInventory(inventory);
+            console.log('تم تحميل بيانات المخزون بنجاح');
         } catch (error) {
-            console.error('Error loading inventory:', error);
+            console.error('خطأ في تحميل بيانات المخزون:', error);
         }
     }
+
+    // ... باقي الكود بدون تغيير ...
+
+    static async saveInventoryItem() {
+        const itemData = {
+            name: document.getElementById('itemName').value,
+            category: document.getElementById('itemCategory').value,
+            quantity: parseFloat(document.getElementById('itemQuantity').value),
+            unit: document.getElementById('itemUnit').value,
+            minimumStock: parseFloat(document.getElementById('minimumStock').value),
+            expiryDate: document.getElementById('expiryDate').value || null,
+            notes: document.getElementById('itemNotes').value
+        };
+
+        try {
+            await DatabaseManager.add('inventory', itemData);
+            closeModal();
+            this.loadInventory();
+            window.app.loadDashboardData();
+            window.app.showSuccess('تم إضافة العنصر للمخزون بنجاح 📦');
+        } catch (error) {
+            console.error('Error saving inventory item:', error);
+            window.app.showError('حدث خطأ في إضافة العنصر');
+        }
+    }
+}
 
     static renderInventory(inventory) {
         const container = document.getElementById('inventory-list');
@@ -155,29 +183,7 @@ class InventoryManager {
         });
     }
 
-    static async saveInventoryItem() {
-        const itemData = {
-            name: document.getElementById('itemName').value,
-            category: document.getElementById('itemCategory').value,
-            quantity: parseFloat(document.getElementById('itemQuantity').value),
-            unit: document.getElementById('itemUnit').value,
-            minimumStock: parseFloat(document.getElementById('minimumStock').value),
-            expiryDate: document.getElementById('expiryDate').value || null,
-            notes: document.getElementById('itemNotes').value,
-            createdAt: new Date().toISOString()
-        };
-
-        try {
-            await DatabaseManager.add('inventory', itemData);
-            closeModal();
-            this.loadInventory();
-            window.app.loadDashboardData();
-            window.app.showNotification('تم إضافة العنصر للمخزون بنجاح');
-        } catch (error) {
-            console.error('Error saving inventory item:', error);
-            window.app.showNotification('حدث خطأ في إضافة العنصر');
-        }
-    }
+    
 
     static async editItem(itemId) {
         try {
@@ -371,3 +377,4 @@ class InventoryManager {
         }
     }
                                                              }
+} 
