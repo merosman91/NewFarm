@@ -3,6 +3,12 @@ class ShamsinApp {
     constructor() {
         this.currentPage = 'dashboard';
         this.isInitialized = false;
+        this.managersLoaded = {
+            batches: false,
+            finance: false,
+            inventory: false,
+            reports: false
+        };
         this.init();
     }
 
@@ -14,6 +20,7 @@ class ShamsinApp {
             await DatabaseManager.getDB();
             
             this.setupEventListeners();
+            await this.loadManagers();
             await this.loadDashboardData();
             this.checkLowStock();
             this.requestNotificationPermission();
@@ -24,6 +31,36 @@ class ShamsinApp {
         } catch (error) {
             console.error('فشل في تهيئة التطبيق:', error);
             this.showError('فشل في تحميل التطبيق. يرجى تحديث الصفحة.');
+        }
+    }
+
+    async loadManagers() {
+        console.log('تحميل المديرات...');
+        
+        // تحميل المديرات بشكل متسلسل
+        try {
+            if (typeof BatchesManager !== 'undefined') {
+                this.managersLoaded.batches = true;
+                console.log('✅ BatchesManager محمل');
+            }
+            
+            if (typeof FinanceManager !== 'undefined') {
+                this.managersLoaded.finance = true;
+                console.log('✅ FinanceManager محمل');
+            }
+            
+            if (typeof InventoryManager !== 'undefined') {
+                this.managersLoaded.inventory = true;
+                console.log('✅ InventoryManager محمل');
+            }
+            
+            if (typeof ReportsManager !== 'undefined') {
+                this.managersLoaded.reports = true;
+                console.log('✅ ReportsManager محمل');
+            }
+            
+        } catch (error) {
+            console.error('خطأ في تحميل المديرات:', error);
         }
     }
 
@@ -39,13 +76,32 @@ class ShamsinApp {
             });
         });
 
-        // زر القائمة المتنقلة
+        // زر القائمة المتنقلة - إصلاح كامل
         const navToggle = document.querySelector('.nav-toggle');
         if (navToggle) {
-            navToggle.addEventListener('click', () => {
-                document.querySelector('.nav-links').classList.toggle('active');
+            navToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('تم النقر على زر القائمة');
+                const navLinks = document.querySelector('.nav-links');
+                if (navLinks) {
+                    navLinks.classList.toggle('active');
+                    console.log('حالة القائمة:', navLinks.classList.contains('active') ? 'مفتوحة' : 'مغلقة');
+                }
             });
         }
+
+        // إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', (e) => {
+            const navLinks = document.querySelector('.nav-links');
+            const navToggle = document.querySelector('.nav-toggle');
+            
+            if (navLinks && navLinks.classList.contains('active') && 
+                !navLinks.contains(e.target) && 
+                !navToggle.contains(e.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
 
         // نماذج الدفعات
         const batchForm = document.getElementById('batchForm');
@@ -121,43 +177,42 @@ class ShamsinApp {
     loadPageData(pageName) {
         console.log('تحميل بيانات الصفحة:', pageName);
         
+        // التحقق من جاهزية المدير قبل التحميل
+        if (!this.managersLoaded[pageName]) {
+            console.warn(`المدير ${pageName} غير محمل بعد`);
+            this.showError(`وحدة ${this.getModuleName(pageName)} غير جاهزة بعد`);
+            return;
+        }
+        
         switch(pageName) {
             case 'batches':
-                if (window.BatchesManager && typeof BatchesManager.loadBatches === 'function') {
-                    BatchesManager.loadBatches();
-                } else {
-                    console.error('BatchesManager غير متاح');
-                }
+                BatchesManager.loadBatches();
                 break;
             case 'finance':
-                if (window.FinanceManager && typeof FinanceManager.loadFinancialData === 'function') {
-                    FinanceManager.loadFinancialData();
-                } else {
-                    console.error('FinanceManager غير متاح');
-                }
+                FinanceManager.loadFinancialData();
                 break;
             case 'inventory':
-                if (window.InventoryManager && typeof InventoryManager.loadInventory === 'function') {
-                    InventoryManager.loadInventory();
-                } else {
-                    console.error('InventoryManager غير متاح');
-                }
+                InventoryManager.loadInventory();
                 break;
             case 'reports':
-                if (window.ReportsManager && typeof ReportsManager.loadReports === 'function') {
-                    ReportsManager.loadReports();
-                } else {
-                    console.error('ReportsManager غير متاح');
-                }
+                ReportsManager.loadReports();
                 break;
         }
+    }
+
+    getModuleName(pageName) {
+        const modules = {
+            'batches': 'الدفعات',
+            'finance': 'المالية',
+            'inventory': 'المخزون',
+            'reports': 'التقارير'
+        };
+        return modules[pageName] || pageName;
     }
 
     async loadDashboardData() {
         try {
             console.log('تحميل بيانات لوحة التحكم...');
-            
-            const db = await DatabaseManager.getDB();
             
             // الدفعات النشطة
             const batches = await DatabaseManager.getAll('batches');
@@ -268,7 +323,14 @@ class ShamsinApp {
     }
 
     showToast(message, type = 'info') {
+        // إزالة الـ toast القديم إن وجد
+        const oldToast = document.querySelector('.shamsin-toast');
+        if (oldToast) {
+            oldToast.remove();
+        }
+        
         const toast = document.createElement('div');
+        toast.className = 'shamsin-toast';
         const bgColor = type === 'error' ? '#f44336' : type === 'success' ? '#4caf50' : '#ff9800';
         
         toast.style.cssText = `
@@ -363,15 +425,29 @@ class ShamsinApp {
         }
 
         try {
-            await DatabaseManager.add('batches', batchData);
+            const result = await DatabaseManager.add('batches', batchData);
+            console.log('تم حفظ الدفعة بنتيجة:', result);
+            
             this.closeModal();
             document.getElementById('batchForm').reset();
-            this.showPage('batches');
-            this.showSuccess('تم حفظ الدفعة بنجاح');
+            
+            // إعادة تحميل البيانات
+            await this.loadDashboardData();
+            if (this.managersLoaded.batches) {
+                BatchesManager.loadBatches();
+            }
+            
+            this.showSuccess('تم حفظ الدفعة بنجاح 🎉');
+            
         } catch (error) {
             console.error('خطأ في حفظ الدفعة:', error);
             this.showError('حدث خطأ في حفظ الدفعة');
         }
+    }
+
+    // دالة للتحقق من جاهزية المدير
+    isManagerReady(managerName) {
+        return this.managersLoaded[managerName] === true;
     }
 }
 
@@ -381,12 +457,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.app = new ShamsinApp();
 });
 
-// الدوال العامة للاستخدام في الملفات الأخرى
+// الدوال العامة المحسنة
 function showPage(pageName) {
     if (window.app) {
         window.app.showPage(pageName);
     } else {
         console.error('التطبيق غير مهيء بعد');
+        setTimeout(() => showPage(pageName), 100);
     }
 }
 
@@ -409,55 +486,70 @@ function showBatchForm() {
 }
 
 function showExpenseForm() {
-    if (window.FinanceManager && typeof FinanceManager.showExpenseForm === 'function') {
+    if (window.app && window.app.isManagerReady('finance')) {
         FinanceManager.showExpenseForm();
     } else {
-        console.error('FinanceManager غير متاح');
-        window.app?.showError('وحدة المالية غير جاهزة بعد');
+        console.error('FinanceManager غير جاهز');
+        window.app?.showError('وحدة المالية غير جاهزة بعد، جاري التحميل...');
+        // إعادة المحاولة بعد ثانية
+        setTimeout(showExpenseForm, 1000);
     }
 }
 
 function showIncomeForm() {
-    if (window.FinanceManager && typeof FinanceManager.showIncomeForm === 'function') {
+    if (window.app && window.app.isManagerReady('finance')) {
         FinanceManager.showIncomeForm();
     } else {
-        console.error('FinanceManager غير متاح');
-        window.app?.showError('وحدة المالية غير جاهزة بعد');
+        console.error('FinanceManager غير جاهز');
+        window.app?.showError('وحدة المالية غير جاهزة بعد، جاري التحميل...');
+        setTimeout(showIncomeForm, 1000);
     }
 }
 
 function showInventoryForm() {
-    if (window.InventoryManager && typeof InventoryManager.showInventoryForm === 'function') {
+    if (window.app && window.app.isManagerReady('inventory')) {
         InventoryManager.showInventoryForm();
     } else {
-        console.error('InventoryManager غير متاح');
-        window.app?.showError('وحدة المخزون غير جاهزة بعد');
+        console.error('InventoryManager غير جاهز');
+        window.app?.showError('وحدة المخزون غير جاهزة بعد، جاري التحميل...');
+        setTimeout(showInventoryForm, 1000);
     }
 }
 
 function generateBatchReport() {
-    if (window.ReportsManager && typeof ReportsManager.generateBatchReport === 'function') {
+    if (window.app && window.app.isManagerReady('reports')) {
         ReportsManager.generateBatchReport();
     } else {
-        console.error('ReportsManager غير متاح');
+        console.error('ReportsManager غير جاهز');
         window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
 }
 
 function generateFinancialReport() {
-    if (window.ReportsManager && typeof ReportsManager.generateFinancialReport === 'function') {
+    if (window.app && window.app.isManagerReady('reports')) {
         ReportsManager.generateFinancialReport();
     } else {
-        console.error('ReportsManager غير متاح');
+        console.error('ReportsManager غير جاهز');
         window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
 }
 
 function generateProfitabilityReport() {
-    if (window.ReportsManager && typeof ReportsManager.generateProfitabilityReport === 'function') {
+    if (window.app && window.app.isManagerReady('reports')) {
         ReportsManager.generateProfitabilityReport();
     } else {
-        console.error('ReportsManager غير متاح');
+        console.error('ReportsManager غير جاهز');
         window.app?.showError('وحدة التقارير غير جاهزة بعد');
     }
-                }
+}
+
+// دالة مساعدة للتحميل الآمن
+function safeCall(callback, fallbackMessage) {
+    try {
+        return callback();
+    } catch (error) {
+        console.error(fallbackMessage, error);
+        window.app?.showError(fallbackMessage);
+        return null;
+    }
+        }
