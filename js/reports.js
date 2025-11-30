@@ -9,7 +9,7 @@ class ReportsManager {
             const dailyRecords = await DatabaseManager.getAll('dailyRecords');
             
             if (batches.length === 0) {
-                alert('لا توجد دفعات لعمل تقرير');
+                window.app.showError('لا توجد دفعات لعمل تقرير');
                 return;
             }
 
@@ -31,11 +31,11 @@ class ReportsManager {
             });
 
             this.downloadReport(reportContent, 'تقرير-الدفعات.txt');
-            window.app.showNotification('تم إنشاء تقرير الدفعات بنجاح');
+            window.app.success('تم إنشاء تقرير الدفعات بنجاح');
 
         } catch (error) {
             console.error('Error generating batch report:', error);
-            alert('حدث خطأ في إنشاء التقرير');
+            window.app.showError('حدث خطأ في إنشاء التقرير');
         }
     }
 
@@ -85,11 +85,11 @@ class ReportsManager {
             });
 
             this.downloadReport(reportContent, 'التقرير-المالي.txt');
-            window.app.showNotification('تم إنشاء التقرير المالي بنجاح');
+            window.app.Success('تم إنشاء التقرير المالي بنجاح');
 
         } catch (error) {
             console.error('Error generating financial report:', error);
-            alert('حدث خطأ في إنشاء التقرير');
+            window.app.showError('حدث خطأ في إنشاء التقرير');
         }
     }
 
@@ -131,11 +131,11 @@ class ReportsManager {
             });
 
             this.downloadReport(reportContent, 'تحليل-الربحية.txt');
-            window.app.showNotification('تم إنشاء تحليل الربحية بنجاح');
+            window.app.Success('تم إنشاء تحليل الربحية بنجاح');
 
         } catch (error) {
             console.error('Error generating profitability report:', error);
-            alert('حدث خطأ في إنشاء التقرير');
+            window.app.showError('حدث خطأ في إنشاء التقرير');
         }
     }
 
