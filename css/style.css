@@ -49,12 +49,19 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     display: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+.nav-toggle:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .nav-links {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 1rem;
+    transition: all 0.3s ease;
 }
 
 .nav-link {
@@ -417,10 +424,12 @@ body {
         background: var(--primary-color);
         flex-direction: column;
         padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .nav-links.active {
         display: flex;
+        animation: slideDown 0.3s ease;
     }
     
     .dashboard-grid {
@@ -553,6 +562,17 @@ body {
     to {
         transform: translateX(-100%);
         opacity: 0;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
