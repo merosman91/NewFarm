@@ -1,13 +1,60 @@
 class FinanceManager {
     static async loadFinancialData() {
         try {
+            console.log('تحميل البيانات المالية...');
             const transactions = await DatabaseManager.getAll('transactions');
             this.renderFinancialSummary(transactions);
             this.renderTransactions(transactions);
+            console.log('تم تحميل البيانات المالية بنجاح');
         } catch (error) {
-            console.error('Error loading financial data:', error);
+            console.error('خطأ في تحميل البيانات المالية:', error);
         }
     }
+
+    // ... باقي الكود بدون تغيير ...
+    
+    static async saveExpense() {
+        const expenseData = {
+            type: 'expense',
+            description: document.getElementById('expenseDescription').value,
+            amount: parseFloat(document.getElementById('expenseAmount').value),
+            category: document.getElementById('expenseCategory').value,
+            date: document.getElementById('expenseDate').value
+        };
+
+        try {
+            await DatabaseManager.add('transactions', expenseData);
+            closeModal();
+            this.loadFinancialData();
+            window.app.loadDashboardData();
+            window.app.showSuccess('تم إضافة المصروف بنجاح 💰');
+        } catch (error) {
+            console.error('Error saving expense:', error);
+            window.app.showError('حدث خطأ في إضافة المصروف');
+        }
+    }
+
+    static async saveIncome() {
+        const incomeData = {
+            type: 'income',
+            description: document.getElementById('incomeDescription').value,
+            amount: parseFloat(document.getElementById('incomeAmount').value),
+            category: document.getElementById('incomeCategory').value,
+            date: document.getElementById('incomeDate').value
+        };
+
+        try {
+            await DatabaseManager.add('transactions', incomeData);
+            closeModal();
+            this.loadFinancialData();
+            window.app.loadDashboardData();
+            window.app.showSuccess('تم إضافة الإيراد بنجاح 💵');
+        } catch (error) {
+            console.error('Error saving income:', error);
+            window.app.showError('حدث خطأ في إضافة الإيراد');
+        }
+    }
+                                                       }
 
     static renderFinancialSummary(transactions) {
         const totalIncome = transactions
@@ -142,27 +189,7 @@ class FinanceManager {
         });
     }
 
-    static async saveExpense() {
-        const expenseData = {
-            type: 'expense',
-            description: document.getElementById('expenseDescription').value,
-            amount: parseFloat(document.getElementById('expenseAmount').value),
-            category: document.getElementById('expenseCategory').value,
-            date: document.getElementById('expenseDate').value,
-            createdAt: new Date().toISOString()
-        };
-
-        try {
-            await DatabaseManager.add('transactions', expenseData);
-            closeModal();
-            this.loadFinancialData();
-            window.app.loadDashboardData();
-            window.app.showNotification('تم إضافة المصروف بنجاح'); // تم التصحيح هنا
-        } catch (error) {
-            console.error('Error saving expense:', error);
-            window.app.showNotification('حدث خطأ في إضافة المصروف'); // تم التصحيح هنا
-        }
-    }
+    
 
     static showIncomeForm() {
         const modalContent = `
@@ -206,25 +233,6 @@ class FinanceManager {
         });
     }
 
-    static async saveIncome() {
-        const incomeData = {
-            type: 'income',
-            description: document.getElementById('incomeDescription').value,
-            amount: parseFloat(document.getElementById('incomeAmount').value),
-            category: document.getElementById('incomeCategory').value,
-            date: document.getElementById('incomeDate').value,
-            createdAt: new Date().toISOString()
-        };
-
-        try {
-            await DatabaseManager.add('transactions', incomeData);
-            closeModal();
-            this.loadFinancialData();
-            window.app.loadDashboardData();
-            window.app.showNotification('تم إضافة الإيراد بنجاح'); // تم التصحيح هنا
-        } catch (error) {
-            console.error('Error saving income:', error);
-            window.app.showNotification('حدث خطأ في إضافة الإيراد'); // تم التصحيح هنا
-        }
-    }
+    
                 }
+} 
